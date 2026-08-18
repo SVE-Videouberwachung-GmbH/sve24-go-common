@@ -2,6 +2,7 @@
 .PHONY: help fmt lint test ci
 
 GOLANGCI_VERSION := v2.12.2
+TESTCOVERAGE_VERSION := v2.11.4
 
 help:        ## Zeigt diese Hilfe
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*?## "}{printf "  %-8s %s\n", $$1, $$2}'
@@ -24,5 +25,6 @@ ci:          ## Alles, was auch die CI faehrt
 	test -z "$$(gofmt -l .)"
 	$(MAKE) lint
 	go test -coverprofile=coverage.out -covermode=atomic ./...
+	go run github.com/vladopajic/go-test-coverage/v2@$(TESTCOVERAGE_VERSION) --config=./.testcoverage.yml
 	go run golang.org/x/vuln/cmd/govulncheck@latest ./...
 	go build ./...

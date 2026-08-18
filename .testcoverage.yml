@@ -1,0 +1,26 @@
+# Sperrklinke fuer die Testabdeckung.
+#
+# Die Zahlen sind KEIN Ziel, sondern eine Untergrenze: sie duerfen nur steigen.
+# Wer eine senkt, muss das in einem eigenen Commit begruenden.
+#
+# WARUM DIESES MODUL EINE BESONDERS ERNSTE KLINKE BRAUCHT: hierher ist am
+# 2026-08-18 die Rechteaufloesung aus fuenf Diensten gewandert. In deren Repos
+# ist die Deckung dadurch gesunken — voellig zu Recht, der Code liegt jetzt
+# hier. Ohne eine Klinke an DIESER Stelle waere die Pruefung dabei aber
+# insgesamt duenner geworden, ohne dass es jemand gemerkt haette.
+#
+# Ein Fehler hier ist kein Fehler in einer Anwendung, sondern einer im
+# Zugangsschloss des ganzen Oekosystems.
+profile: coverage.out
+
+threshold:
+  file: 0
+  package: 0
+  total: 0
+
+override:
+  # Gemessen 84,6 %. Ungedeckt bleiben nur die Zweige, die einen kaputten
+  # Request oder einen JSON-Marshal-Fehler beschreiben — beides kann mit
+  # festen Eingaben nicht auftreten.
+  - path: ^authz$
+    threshold: 84

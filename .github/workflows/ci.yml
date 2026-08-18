@@ -25,6 +25,11 @@ jobs:
       - run: make lint
       - run: go test -coverprofile=coverage.out -covermode=atomic ./...
 
+      # Die Deckung von fuenf Diensten ist hierher gewandert. Ohne diese Klinke
+      # waere die Pruefung insgesamt duenner geworden, ohne dass es auffaellt.
+      - name: Coverage-Klinke
+        run: go run github.com/vladopajic/go-test-coverage/v2@v2.11.4 --config=./.testcoverage.yml
+
       # Dieses Modul beantwortet die Rechtefrage fuer JEDEN Dienst. Eine
       # Schwachstelle hier ist keine in einer Anwendung, sondern eine im
       # Zugangsschloss des ganzen Oekosystems.
