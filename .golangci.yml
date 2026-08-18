@@ -1,0 +1,119 @@
+# golangci-lint (Schema v2) — gemeinsame Konfiguration des Oekosystems.
+#
+# Diese Datei ist in allen Go-Modulen IDENTISCH. Derselbe Code soll ueberall
+# dieselben Meldungen erzeugen; wer hier etwas aendert, aendert es ueberall.
+#
+# Vorher gab es sie in zwei von sechs Modulen, und die beiden widersprachen
+# sich: routeplan fuhr die v2-Vorgaben plus bodyclose/sqlclosecheck, der Price
+# Tracker `default: none` mit einer eigenen Liste, in der sqlclosecheck fehlte
+# und noctx dafuer da war. Zwei Antworten auf dieselbe Frage.
+#
+# `default: none` ist bewusst NICHT uebernommen: es schneidet das Modul von
+# allen kuenftigen Verbesserungen der Vorgabemenge ab. Wer eine Regel nicht
+# will, schaltet SIE ab — nicht alle.
+version: "2"
+
+linters:
+  # Ohne `default:` gilt die v2-Vorgabemenge (errcheck, govet, staticcheck,
+  # ineffassign, unused). Ergaenzt um die vier, die in diesem Oekosystem
+  # wiederholt etwas gefunden haben:
+  enable:
+    # Nicht geschlossene Antwortkoerper — in Diensten, die einander ueber HTTP
+    # nach Rechten fragen, ein echter Leckpfad.
+    - bodyclose
+    # Anfragen ohne Kontext. Was hier faellt, kann nicht abgebrochen werden,
+    # wenn der Aufrufer laengst weg ist.
+    - noctx
+    # Nicht geschlossene sql.Rows.
+    - sqlclosecheck
+    # Fehlervergleiche mit == statt errors.Is. Ein eingepackter Fehler wird so
+    # still verfehlt, und der Zweig "nichts gefunden" wird zum Serverfehler.
+    # Gemessen am 2026-08-14: 20 Fundstellen in vier Modulen, dreimal allein
+    # in routeplans archive.go.
+    - errorlint
+    # Sicherheitsmuster. Nicht jede Meldung ist ein Fund — aber jede braucht
+    # eine Entscheidung, und die gehoert an die Fundstelle, nicht in eine
+    # pauschale Abschaltung hier.
+    - gosec
+
+  settings:
+    errcheck:
+      check-type-assertions: true
+      exclude-functions:
+        # Schliessen im defer: der Fehler ist dort nicht behandelbar, und ihn
+        # zu protokollieren erzeugt Laerm ohne Handlung.
+        - (io.Closer).Close
+        - (io.ReadCloser).Close
+        - (*github.com/jackc/pgx/v5.Tx).Rollback
+        # Schreiben in die Antwort: schlaegt das fehl, ist die Verbindung weg
+        # und es gibt niemanden mehr, dem man davon erzaehlen koennte.
+        - fmt.Fprintf
+        - fmt.Sscanf
+        - (*encoding/json.Encoder).Encode
+
+    govet:
+      enable-all: true
+      disable:
+        # Speicherlayout-Feinschliff. Felder einer Struktur umzusortieren, die
+        # eine Datenbankzeile oder einen JSON-Vertrag abbildet, kostet
+        # Lesbarkeit fuer ein paar Bytes.
+        - fieldalignment
+        # Feuert auf `if v, err := f(); err != nil` — die uebliche Art, einen
+        # Fehler auf seine Pruefung zu begrenzen. Jeder Fund in dieser
+        # Codebasis ist genau das; upstream aus demselben Grund experimentell.
+        - shadow
+
+    staticcheck:
+      checks:
+        - all
+        # ST1005 will Fehlertexte klein und ohne Satzzeichen. Unsere sind
+        # deutsch und benutzerseitig ("Datei enthält keine Datenzeilen") —
+        # Deutsch schreibt Substantive und Satzanfaenge gross, die Regel
+        # widerspricht also der Sprache, in der die Meldung verfasst ist.
+        #
+        # Diese Ausnahme steht ZENTRAL. Stuende sie je Modul, entdeckte jedes
+        # sie neu, sobald dort zum ersten Mal ein deutscher Fehlertext
+        # geschrieben wird.
+        - -ST1005
+
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      # In Tests ist ein nicht geprueftes Close oder Write kein Fund: der Test
+      # scheitert ohnehin, wenn das Ergebnis nicht stimmt.
+      - linters: [errcheck]
+        path: _test\.go
+      - linters: [errcheck]
+        text: Error return value of `json.NewEncoder
+      - linters: [errcheck]
+        source: "defer "
+      # noctx zielt auf AUSGEHENDE Aufrufe: sie sollen abbrechbar sein, wenn
+      # der Aufrufer laengst weg ist. Ein Server-Listener hat keinen Aufrufer.
+      # Der Kontext von ListenConfig.Listen gilt nur waehrend des Einrichtens,
+      # nicht fuer die Lebensdauer des Listeners — dort ein
+      # context.Background() hinzuschreiben erfuellt die Regel, ohne irgendetwas
+      # zu verbessern. Genau das ist die Art Aenderung, die spaeter niemand
+      # mehr erklaeren kann.
+      - linters: [noctx]
+        text: net\.Listen must not be called
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+
+formatters:
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+
+# ── Modulspezifische Ausnahmen ───────────────────────────────────────────────
+# Alles unterhalb dieser Zeile gehoert dem einzelnen Modul und wird beim
+# Abgleich NICHT ueberschrieben. Wer hier etwas eintraegt, begruendet es.

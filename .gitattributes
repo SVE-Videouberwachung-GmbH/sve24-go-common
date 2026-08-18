@@ -1,0 +1,23 @@
+# Zeilenenden festnageln (2026-08-18).
+#
+# `text=auto` sorgt dafuer, dass im Repo LF steht — das war nie das Problem.
+# Ausgecheckt wird auf Windows CRLF, und prettier wie gofmt lesen den
+# ARBEITSBAUM. In sve24-routeplan gemessen: eslint meldete 3.001 Warnungen,
+# davon 2.980 reines "Delete CR"; gofmt listete 33 Dateien statt einer.
+#
+# Eine Pruefung, die immer rot ist, prueft niemand mehr — und ein Assistent
+# lernt, sie zu ignorieren. Fuer die CI aendert sich nichts: dort stand ohnehin
+# LF.
+* text=auto
+
+*.go   text eol=lf
+*.ts   text eol=lf
+*.vue  text eol=lf
+*.js   text eol=lf
+*.mjs  text eol=lf
+*.json text eol=lf
+*.yml  text eol=lf
+*.yaml text eol=lf
+
+# Shell-Skripte IMMER LF — CRLF bricht sh/bash in Linux-Containern.
+*.sh text eol=lf
