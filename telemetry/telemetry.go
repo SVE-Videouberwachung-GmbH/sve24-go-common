@@ -23,7 +23,16 @@ import (
 
 // Setup initialises the global OTel TracerProvider and MeterProvider.
 // Call the returned shutdown function in your main() defer chain.
-// Reads OTEL_EXPORTER_OTLP_ENDPOINT (default: http://sve24-alloy:4318).
+// Reads OTEL_EXPORTER_OTLP_ENDPOINT (default: the collector's fully qualified
+// name, see defaultEndpoint).
+// defaultEndpoint is fully qualified on purpose. The collector lives in the
+// sve24-log namespace while every service runs in its own, so the short name
+// `sve24-alloy` resolves only for pods inside sve24-log — everywhere else it
+// fails, and OTLP export failures are logged by the SDK, not surfaced by the
+// service. Spans would vanish exactly as they did before 2026-08-19, just for
+// a different reason.
+const defaultEndpoint = "http://sve24-alloy.sve24-log.svc.cluster.local:4318"
+
 func Setup(ctx context.Context, serviceName string) (func(context.Context), error) {
 	// NewSchemaless (no SchemaURL) so Merge cannot hit a schema-URL conflict
 	// with resource.Default(): the SDK's default resource carries its own, newer
@@ -42,7 +51,7 @@ func Setup(ctx context.Context, serviceName string) (func(context.Context), erro
 	// ── Traces ────────────────────────────────────────────────────────────────
 	endpoint := os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT")
 	if endpoint == "" {
-		endpoint = "http://sve24-alloy:4318"
+		endpoint = defaultEndpoint
 	}
 	traceExp, err := otlptracehttp.New(ctx, otlptracehttp.WithEndpointURL(endpoint))
 	if err != nil {
