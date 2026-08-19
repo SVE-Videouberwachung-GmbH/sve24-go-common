@@ -24,3 +24,11 @@ override:
   # festen Eingaben nicht auftreten.
   - path: ^authz$
     threshold: 84
+
+  # Measured 86.5 %. What stays uncovered is the exporter/provider setup that
+  # only fails when the OTel SDK itself cannot construct a resource — not
+  # reachable from a test without breaking the SDK. Everything that can go
+  # wrong silently is covered: the trace handler is asserted on its emitted
+  # JSON, because a handler that stops adding trace_id fails nothing.
+  - path: ^telemetry$
+    threshold: 86
