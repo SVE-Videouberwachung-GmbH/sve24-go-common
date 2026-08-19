@@ -31,4 +31,4 @@ override:
   # wrong silently is covered: the trace handler is asserted on its emitted
   # JSON, because a handler that stops adding trace_id fails nothing.
   - path: ^telemetry$
-    threshold: 86
+    threshold: 87

@@ -124,3 +124,13 @@ func TestSetupReturnsShutdown(t *testing.T) {
 	}
 	shutdown(context.Background())
 }
+
+func TestDefaultEndpointIsFullyQualified(t *testing.T) {
+	// The collector runs in sve24-log; every service runs in its own namespace.
+	// A short name resolves only inside sve24-log, and a failing OTLP export is
+	// logged by the SDK rather than surfaced by the service — so a regression
+	// here makes traces disappear without anything going red.
+	if !strings.Contains(defaultEndpoint, ".svc.cluster.local") {
+		t.Fatalf("default endpoint must be fully qualified, got %q", defaultEndpoint)
+	}
+}
