@@ -8,7 +8,18 @@ on:
 jobs:
   go:
     name: Go
-    runs-on: ubuntu-latest
+    # Eigener Runner im Cluster (sve-cluster, applications/gha-runner-scale-set).
+    #
+    # Anlass: GitHub hat die Actions-Laeufe dieser Organisation am 2026-08-18
+    # wegen der Abrechnung gestoppt — die Jobs starten nicht einmal. Ein
+    # eigener Runner verbraucht keine GitHub-Minuten.
+    #
+    # Das Runner-Image ist schlanker als ubuntu-latest, bringt aber make, jq
+    # und das compose-Plugin mit (sve24-ci, runner/Dockerfile). Wer einen
+    # Schritt ergaenzt, der etwas anderes voraussetzt, ergaenzt es dort — nicht
+    # per apt-get im Workflow: der naechste Auftrag saehe sonst einen anderen
+    # Runner-Zustand als dieser.
+    runs-on: sve24-k8s
     steps:
       - uses: actions/checkout@v4
 
