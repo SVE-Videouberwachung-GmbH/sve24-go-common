@@ -6,6 +6,24 @@ on:
   pull_request:
 
 jobs:
+  # Schutz gegen Rueckfall: ein Ablauf auf einem GitHub-gehosteten Laeufer
+  # haengt wieder an GitHubs Abrechnung — genau daran ist am 2026-08-18 die
+  # gesamte Organisation stehengeblieben, ohne dass ein einziger Job startete.
+  # Der Fehler faellt hier im Pull Request auf statt erst im Ernstfall.
+  runner-treue:
+    name: Nur eigene Runner
+    runs-on: sve24-k8s
+    steps:
+      - uses: actions/checkout@v4
+      - name: Keine GitHub-gehosteten Laeufer
+        run: |
+          set -euo pipefail
+          if grep -rnE "runs-on:\s*(ubuntu|windows|macos)" .github/workflows/; then
+            echo "::error::GitHub-gehosteter Laeufer gefunden — bitte sve24-k8s verwenden."
+            exit 1
+          fi
+          echo "Alle Ablaeufe laufen auf eigenen Runnern."
+
   go:
     name: Go
     # Eigener Runner im Cluster (sve-cluster, applications/gha-runner-scale-set).
