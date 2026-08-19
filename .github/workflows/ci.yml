@@ -14,11 +14,14 @@ jobs:
     # wegen der Abrechnung gestoppt — die Jobs starten nicht einmal. Ein
     # eigener Runner verbraucht keine GitHub-Minuten.
     #
-    # Das Runner-Image ist schlanker als ubuntu-latest, bringt aber make, jq
-    # und das compose-Plugin mit (sve24-ci, runner/Dockerfile). Wer einen
-    # Schritt ergaenzt, der etwas anderes voraussetzt, ergaenzt es dort — nicht
-    # per apt-get im Workflow: der naechste Auftrag saehe sonst einen anderen
-    # Runner-Zustand als dieser.
+    # ACHTUNG BEIM ERGAENZEN VON SCHRITTEN: das Runner-Image ist schlanker als
+    # ubuntu-latest. Was dieser Workflow voraussetzt, stellt er sich SELBST
+    # bereit (Schritte unten) — nicht ueber ein eigenes Runner-Image.
+    #
+    # Der Grund ist der Rueckweg: ein Workflow, der stillschweigend von einem
+    # bestimmten Image abhaengt, faellt genau dann aus, wenn man auf einen
+    # anderen Runner ausweichen muss. So laeuft er unveraendert auch auf
+    # ubuntu-latest.
     runs-on: sve24-k8s
     steps:
       - uses: actions/checkout@v4
